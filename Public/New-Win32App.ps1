@@ -143,6 +143,7 @@ Function New-Win32App {
     If (!(Test-Path -Path $WorkingFolder_Logs)) {
         New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
+    
     If ($ResetLog) {
         Write-Log -ResetLogFile -Log "Main.Log"
     }
