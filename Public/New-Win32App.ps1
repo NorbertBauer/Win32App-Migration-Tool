@@ -148,7 +148,7 @@ Function New-Win32App {
         New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
     
-    $MainLogFile = Join-Path -Path $WorkingFolder_Logs -ChildPath "Main.log"
+    $Global:MainLogFile = Join-Path -Path $WorkingFolder_Logs -ChildPath "Main.log"
 
     If ($ResetLog) {
         Write-CMTraceLog -LogText "Starting new Log" -LogSeverity "Information" -LogFile $MainLogFile -ResetLogFile
