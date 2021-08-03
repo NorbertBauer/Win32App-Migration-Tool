@@ -25,6 +25,8 @@ If it is a Full Path and Filename, the Logfile will be created or used to add th
 If this only a Filename, the file will be created in the Folder of the calling Script
 If Empty, the Log will be created in the Folder of the calling script and named like the script with ".log" as extension
 
+.Parameter ResetLogFile (optional)
+If Switch ResetLogFile is passed, the existing File will be renamed with Date-Time Suffix and a new one will be created
 
 .Example
 Write-CMTraceLog -LogText "1: My Test Entry" -LogFile "C:\Temp\Logs\MyScript.Log" -Component "Application Uninstall" -LogSeverity Information
@@ -116,6 +118,9 @@ Function Write-CMTraceLog {
     If ( $ResetLogFile ) {
         $ExistingLog = Get-Item -Path $LogFile
         If ( $ExistingLog ) {
+            $ResetLogText = "Resetting to new Logfile"
+            $ResetLogOutput = "<![LOG[$($ResetLogText)]LOG]!><time=`"$($Time)`" date=`"$($Date)`" component=`"$($Component)`" context=`"$($Context)`" type=`"$($Type)`" thread=`"$($ProcessID)`" file=`"$($CurrentFile)`">"
+            Out-File -InputObject $ResetLogOutput -Append -NoClobber -Encoding utf8 -FilePath "$($ExistingLog.FullName)"
             $ArchiveLog = ($ExistingLog.Name).Replace($ExistingLog.Extension, '-' + $(Get-Date -Format "yyyyMMdd-HHmmss") + $($ExistingLog.Extension))
             $ExistingLog | Rename-Item -NewName $ArchiveLog
         }

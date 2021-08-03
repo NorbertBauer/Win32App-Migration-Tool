@@ -4,6 +4,10 @@ Created on:   14/03/2021
 Created by:   Ben Whitmore
 Filename:     New-Win32App.ps1
 
+Changed on:   03/08/2021
+Changed by:   Norbert Bauer
+Changes:      Changed Logging function to "Write-CMTraceLog"
+
 The Win32 App Migration Tool is designed to inventory ConfigMgr Applications and Deployment Types, build .intunewin files and create Win3Apps in The MEM Admin Center.
 
 Instead of manually checking Application and Deployment Type information and gathering content to build Win32apps, the Win32APp Migration Tool is designed to do that for you. To date, the Application and Deployment Type information is gathered and a .Intunewin file is created. We are also collecting the logo for the application.
@@ -144,28 +148,30 @@ Function New-Win32App {
         New-Item -Path $WorkingFolder_Logs -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
     
+    $MainLogFile = Join-Path -Path $WorkingFolder_Logs -ChildPath "Main.log"
+
     If ($ResetLog) {
-        Write-Log -ResetLogFile -Log "Main.Log"
+        Write-CMTraceLog -LogText "Starting new Log" -LogSeverity "Information" -LogFile $MainLogFile -ResetLogFile
     }
     
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Script Start Win32AppMigrationTool" -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "Script Start Win32AppMigrationTool" -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host 'Script Start Win32AppMigrationTool' -ForegroundColor DarkGray
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host ''
 
     $ScriptRoot = $PSScriptRoot
-    Write-Log -Message "ScriptRoot = $($ScriptRoot)" -Log "Main.log" 
+    Write-CMTraceLog -LogText "ScriptRoot = $($ScriptRoot)" -LogSeverity "Information" -LogFile $MainLogFile 
 
     #Connect to Site Server
     Connect-SiteServer -SiteCode  $SiteCode -ProviderMachineName $ProviderMachineName
 
     #Region Check_Folders
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Checking Win32AppMigrationTool Folder Structure..." -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "Checking Win32AppMigrationTool Folder Structure..." -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
     Write-Host ''
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host 'Checking Win32AppMigrationTool Folder Structure...' -ForegroundColor DarkGray
@@ -175,14 +181,14 @@ Function New-Win32App {
     #Create Folders
     Write-Host "Creating Folders..."-ForegroundColor Cyan
     New-FolderToCreate -Root $WorkingFolder_Root -Folders @("", "Logs")
-    Write-Log -Message "New-FolderToCreate -Root ""$($WorkingFolder_Root)"" -Folders @(""Logos"", ""Content"", ""ContentPrepTool"",  ""Details"", ""Win32Apps"")" -Log "Main.log" 
+    Write-CMTraceLog -LogText "New-FolderToCreate -Root ""$($WorkingFolder_Root)"" -Folders @(""Logos"", ""Content"", ""ContentPrepTool"",  ""Details"", ""Win32Apps"")" -LogSeverity "Information" -LogFile $MainLogFile 
     New-FolderToCreate -Root $WorkingFolder_Root -Folders @("Logos", "Content", "ContentPrepTool", "Details", "Win32Apps")
     #EndRegion Check_Folders
 
     #Region Get_Content_Tool
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Checking Win32AppMigrationTool Content Tool..." -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "Checking Win32AppMigrationTool Content Tool..." -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
     Write-Host ''
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host 'Checking Win32AppMigrationTool Content Tool...' -ForegroundColor DarkGray
@@ -193,25 +199,25 @@ Function New-Win32App {
     If ($PackageApps) {
         Write-Host "Downloadling Win32 Content Prep Tool..." -ForegroundColor Cyan
         If (Test-Path (Join-Path -Path $WorkingFolder_ContentPrepTool -ChildPath "IntuneWinAppUtil.exe")) {
-            Write-Log -Message "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -Log "Main.log" 
+            Write-CMTraceLog -LogText "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -LogSeverity "Information" -LogFile $MainLogFile 
             Write-Host "Information: IntuneWinAppUtil.exe already exists at ""$($WorkingFolder_ContentPrepTool)"". Skipping download" -ForegroundColor Magenta
         }
         else {
-            Write-Log -Message "Get-FileFromInternet -URI ""https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe"" -Destination $($WorkingFolder_ContentPrepTool)" -Log "Main.log" 
+            Write-CMTraceLog -LogText "Get-FileFromInternet -URI ""https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe"" -Destination $($WorkingFolder_ContentPrepTool)" -LogSeverity "Information" -LogFile $MainLogFile 
             Get-FileFromInternet -URI "https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe" -Destination $WorkingFolder_ContentPrepTool
         }
     } 
     else {
-        Write-Log -Message "The -PackageApps parameter was not passed. Skipping downloading of the Win32 Content Prep Tool." -Log "Main.log" 
+        Write-CMTraceLog -LogText "The -PackageApps parameter was not passed. Skipping downloading of the Win32 Content Prep Tool." -LogSeverity "Information" -LogFile $MainLogFile 
         Write-Host "The -PackageApps parameter was not passed. Skipping downloading of the Win32 Content Prep Tool." -ForegroundColor Magenta
     }
     #EndRegion Get_Content_Tool
 
 
     #Region Display_Application_Results
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
-    Write-Log -Message "Checking Applications..." -Log "Main.log"
-    Write-Log -Message "--------------------------------------------" -Log "Main.log"
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "Checking Applications..." -LogSeverity "Information" -LogFile $MainLogFile
+    Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
     Write-Host ''
     Write-Host '--------------------------------------------' -ForegroundColor DarkGray
     Write-Host 'Checking Applications...' -ForegroundColor DarkGray
@@ -220,24 +226,24 @@ Function New-Win32App {
 
     #Get list of Applications
     If (!$NoOGV) {
-        Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -PassThru -OutVariable $($ApplicationName) -Title ""Select an Application(s) to process the associated Deployment Types""" -Log "Main.log" 
+        Write-CMTraceLog -LogText "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -PassThru -OutVariable $($ApplicationName) -Title ""Select an Application(s) to process the associated Deployment Types""" -LogSeverity "Information" -LogFile $MainLogFile 
         $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName | Sort-Object | Out-GridView -Passthru -Title "Select an Application(s) to process the associated Deployment Types"
     }
     else {
-        Write-Log -Message "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName" -Log "Main.log" 
+        Write-CMTraceLog -LogText "Get-CMApplication -Fast | Where-Object { $($_.LocalizedDisplayName) -like $($AppName) } | Select-Object -ExpandProperty LocalizedDisplayName" -LogSeverity "Information" -LogFile $MainLogFile 
         $ApplicationName = Get-CMApplication -Fast | Where-Object { $_.LocalizedDisplayName -like "$AppName" } | Select-Object -ExpandProperty LocalizedDisplayName 
     }
     
     If ($ApplicationName) {
-        Write-Log -Message "The Win32App Migration Tool will process the following Applications:" -Log "Main.log"
+        Write-CMTraceLog -LogText "The Win32App Migration Tool will process the following Applications:" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host "The Win32App Migration Tool will process the following Applications:"
         ForEach ($Application in $ApplicationName) {
-            Write-Log -Message "$($Application)" -Log "Main.log"
+            Write-CMTraceLog -LogText "$($Application)" -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host """$($Application)""" -ForegroundColor Green
         }
     }
     else {
-        Write-Log -Message "AppName ""$($AppName)"" could not be found or no selection was made." -Log "Main.log"
+        Write-CMTraceLog -LogText "AppName ""$($AppName)"" could not be found or no selection was made." -LogSeverity "Error" -LogFile $MainLogFile
         Write-Host "AppName ""$($AppName)"" could not be found or no selection was made. Please re-run the tool and try again. The AppName parameter does accept wildcards i.e. *" -ForegroundColor Red
         Get-ScriptEnd
         break
@@ -245,9 +251,9 @@ Function New-Win32App {
     #EndRegion Display_Application_Results
 
     #Region Export_Details_CSV
-    Write-Log -Message "Calling function to grab deployment type detail for application(s)" -Log "Main.log" 
+    Write-CMTraceLog -LogText "Calling function to grab deployment type detail for application(s)" -LogSeverity "Information" -LogFile $MainLogFile 
     #Calling function to grab deployment type detail for application(s)
-    Write-Log -Message "`$App_Array = Get-AppInfo -ApplicationName ""$($ApplicationName)""" -Log "Main.log"
+    Write-CMTraceLog -LogText "`$App_Array = Get-AppInfo -ApplicationName ""$($ApplicationName)""" -LogSeverity "Information" -LogFile $MainLogFile
     $App_Array = Get-AppInfo -ApplicationName $ApplicationName
     $DeploymentTypes_Array = $App_Array[0]
     $Applications_Array = $App_Array[1]
@@ -256,27 +262,27 @@ Function New-Win32App {
     #Export $DeploymentTypes to CSV for reference
     Try {
         $DeploymentTypes_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "DeploymentTypes.csv") -NoTypeInformation -Force
-        Write-Log -Message "`$DeploymentTypes_Array is located at $($WorkingFolder_Detail)\DeploymentTypes.csv" -Log "Main.log" 
+        Write-CMTraceLog -LogText "`$DeploymentTypes_Array is located at $($WorkingFolder_Detail)\DeploymentTypes.csv" -LogSeverity "Information" -LogFile $MainLogFile 
     }
     Catch {
         Write-Host "Error: Could not Export DeploymentTypes.csv. Do you have it open?" -ForegroundColor Red
-        Write-Log -Message "Error: Could not Export DeploymentTypes.csv. Do you have it open?" -Log "Main.log" 
+        Write-CMTraceLog -LogText "Error: Could not Export DeploymentTypes.csv. Do you have it open?" -LogSeverity "Error" -LogFile $MainLogFile 
     }
     Try {
         $Applications_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Applications.csv") -NoTypeInformation -Force
-        Write-Log -Message "`$Applications_Array is located at $($WorkingFolder_Detail)\Applications.csv" -Log "Main.log" 
+        Write-CMTraceLog -LogText "`$Applications_Array is located at $($WorkingFolder_Detail)\Applications.csv" -LogSeverity "Information" -LogFile $MainLogFile 
     }
     Catch {
         Write-Host "Error: Could not Export Applications.csv. Do you have it open?" -ForegroundColor Red
-        Write-Log -Message "Error: Could not Export Applications.csv. Do you have it open?" -Log "Main.log" 
+        Write-CMTraceLog -LogText "Error: Could not Export Applications.csv. Do you have it open?" -LogSeverity "Error" -LogFile $MainLogFile 
     }
     Try {
         $Content_Array | Export-Csv (Join-Path -Path $WorkingFolder_Detail -ChildPath "Content.csv") -NoTypeInformation -Force
-        Write-Log -Message "`$Content_Array is located at $($WorkingFolder_Detail)\Content.csv" -Log "Main.log" 
+        Write-CMTraceLog -LogText "`$Content_Array is located at $($WorkingFolder_Detail)\Content.csv" -LogSeverity "Information" -LogFile $MainLogFile 
     }
     Catch {
         Write-Host "Error: Could not Export Content.csv. Do you have it open?" -ForegroundColor Red
-        Write-Log -Message "Error: Could not Export Content.csv. Do you have it open?" -Log "Main.log" 
+        Write-CMTraceLog -LogText "Error: Could not Export Content.csv. Do you have it open?" -LogSeverity "Error" -LogFile $MainLogFile 
     }
     Write-Host "Details of the selected Applications and Deployment Types can be found at ""$($WorkingFolder_Detail)"""
     #EndRegion Export_Details_CSV
@@ -285,9 +291,9 @@ Function New-Win32App {
     If ($ExportLogo) {
 
         #Call function to export logo for application
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Exporting Logo(s)..." -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "Exporting Logo(s)..." -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host ''
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Exporting Logo(s)...' -ForegroundColor DarkGray
@@ -295,9 +301,9 @@ Function New-Win32App {
         Write-Host ''
 
         ForEach ($Application in $Applications_Array) {
-            Write-Log -Message "`$IconId = $($Application.Application_IconId)" -Log "Main.log"
+            Write-CMTraceLog -LogText "`$IconId = $($Application.Application_IconId)" -LogSeverity "Information" -LogFile $MainLogFile
             $IconId = $Application.Application_IconId
-            Write-Log -Message "Export-Logo -IconId $($IconId) -AppName $($Application.Application_Name)" -Log "Main.log"
+            Write-CMTraceLog -LogText "Export-Logo -IconId $($IconId) -AppName $($Application.Application_Name)" -LogSeverity "Information" -LogFile $MainLogFile
             Export-Logo -IconId $IconId -AppName $Application.Application_Name
         }
     }
@@ -307,10 +313,10 @@ Function New-Win32App {
     #If the $PackageApps parameter was passed. Use the Win32Content Prep Tool to build Intune.win files
     If ($PackageApps) {
         #Region Creating_Application_Folders
-        Write-Log -Message "`$PackageApps Parameter passed" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Creating Application Folder(s)" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "`$PackageApps Parameter passed" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "Creating Application Folder(s)" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host ''
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Creating Application Folder(s)' -ForegroundColor DarkGray
@@ -320,16 +326,16 @@ Function New-Win32App {
         ForEach ($Application in $Applications_Array) {
 
             #Create Application Parent Folder(s)
-            Write-Log -Message "Application: $($Application.Application_Name)" -Log "Main.log"
+            Write-CMTraceLog -LogText "Application: $($Application.Application_Name)" -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host "Application: ""$($Application.Application_Name)"""
-            Write-Log -Message "Creating Application Folder $($Application.Application_LogicalName) for Application $($Application.Application_Name)" -Log "Main.log"
+            Write-CMTraceLog -LogText "Creating Application Folder $($Application.Application_LogicalName) for Application $($Application.Application_Name)" -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host "Creating Application Folder ""$($Application.Application_LogicalName)"" for Application ""$($Application.Application_Name)""" -ForegroundColor Cyan
             If (!(Test-Path -Path (Join-Path -Path $WorkingFolder_Win32Apps -ChildPath $Application.Application_LogicalName ))) {
-                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -Folders $($Application.Application_LogicalName)" -Log "Main.log"
+                Write-CMTraceLog -LogText "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -Folders $($Application.Application_LogicalName)" -LogSeverity "Information" -LogFile $MainLogFile
                 New-FolderToCreate -Root $WorkingFolder_Win32Apps -Folders $Application.Application_LogicalName
             }
             else {
-                Write-Log -Message "Information: Application Folder $($Application.Application_LogicalName) already exists" -Log "Main.log"
+                Write-CMTraceLog -LogText "Information: Application Folder $($Application.Application_LogicalName) already exists" -LogSeverity "Information" -LogFile $MainLogFile
                 Write-Host "Information: Application Folder ""$($Application.Application_LogicalName)"" already exists" -ForegroundColor Magenta
             }
             Write-Host ''
@@ -337,9 +343,9 @@ Function New-Win32App {
         #EndRegion Creating_Application_Folders
 
         #Region Creating_DeploymentType_Folders
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Creating DeploymentType Folder(s)" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "Creating DeploymentType Folder(s)" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host ''
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Creating DeploymentType Folder(s)' -ForegroundColor DarkGray
@@ -348,14 +354,14 @@ Function New-Win32App {
         ForEach ($DeploymentType in $DeploymentTypes_Array) {
 
             #Create DeploymentType Child Folder(s)
-            Write-Log -Message "Creating DeploymentType Folder $($DeploymentType.DeploymentType_LogicalName) for DeploymentType $($DeploymentType.DeploymentType_Name)" -Log "Main.log"
+            Write-CMTraceLog -LogText "Creating DeploymentType Folder $($DeploymentType.DeploymentType_LogicalName) for DeploymentType $($DeploymentType.DeploymentType_Name)" -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host "Creating DeploymentType Folder ""$($DeploymentType.DeploymentType_LogicalName)"" for DeploymentType ""$($DeploymentType.DeploymentType_Name)""" -ForegroundColor Cyan
             If (!(Test-Path -Path (Join-Path -Path (Join-Path -Path $WorkingFolder_Win32Apps -ChildPath $DeploymentType.Application_LogicalName ) -ChildPath $DeploymentType.DeploymentType_LogicalName))) {
-                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -Folders (Join-Path -Path $($DeploymentType.Application_LogicalName) -ChildPath $($DeploymentType.DeploymentType_LogicalName))" -Log "Main.log"
+                Write-CMTraceLog -LogText "New-FolderToCreate -Root $($WorkingFolder_Win32Apps) -Folders (Join-Path -Path $($DeploymentType.Application_LogicalName) -ChildPath $($DeploymentType.DeploymentType_LogicalName))" -LogSeverity "Information" -LogFile $MainLogFile
                 New-FolderToCreate -Root $WorkingFolder_Win32Apps -Folders (Join-Path -Path $DeploymentType.Application_LogicalName -ChildPath $DeploymentType.DeploymentType_LogicalName)
             }
             else {
-                Write-Log -Message "Information: Folder ""$($WorkingFolder_Win32Apps)\$($DeploymentType.DeploymentType_LogicalName)\$($DeploymentType.DeploymentType_LogicalName)"" already exists" -Log "Main.log"
+                Write-CMTraceLog -LogText "Information: Folder ""$($WorkingFolder_Win32Apps)\$($DeploymentType.DeploymentType_LogicalName)\$($DeploymentType.DeploymentType_LogicalName)"" already exists" -LogSeverity "Information" -LogFile $MainLogFile
                 Write-Host "Information: Folder ""$($WorkingFolder_Win32Apps)\$($DeploymentType.DeploymentType_LogicalName)\$($DeploymentType.DeploymentType_LogicalName)"" already exists" -ForegroundColor Magenta
             }
             Write-Host ''
@@ -363,9 +369,9 @@ Function New-Win32App {
         #EndRegion Creating_DeploymentType_Folders
 
         #Region Creating_Content_Folders
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Creating Content Folder(s)" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "Creating Content Folder(s)" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host ''
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Creating Content Folder(s)' -ForegroundColor DarkGray
@@ -374,14 +380,14 @@ Function New-Win32App {
         ForEach ($DeploymentType in $DeploymentTypes_Array) {
 
             #Create DeploymentType Content Folder(s)
-            Write-Log -Message "Creating DeploymentType Content Folder for DeploymentType $($DeploymentType.DeploymentType_Name)" -Log "Main.log"
+            Write-CMTraceLog -LogText "Creating DeploymentType Content Folder for DeploymentType $($DeploymentType.DeploymentType_Name)" -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host "Creating DeploymentType Content Folder for DeploymentType ""$($DeploymentType.DeploymentType_Name)""" -ForegroundColor Cyan
             If (!(Test-Path -Path (Join-Path -Path $WorkingFolder_Content -ChildPath $DeploymentType.Application_LogicalName))) {
-                Write-Log -Message "New-FolderToCreate -Root $($WorkingFolder_Content) -Folders $($DeploymentType.DeploymentType_LogicalName)" -Log "Main.log"
+                Write-CMTraceLog -LogText "New-FolderToCreate -Root $($WorkingFolder_Content) -Folders $($DeploymentType.DeploymentType_LogicalName)" -LogSeverity "Information" -LogFile $MainLogFile
                 New-FolderToCreate -Root $WorkingFolder_Content -Folders $DeploymentType.DeploymentType_LogicalName
             }
             else {
-                Write-Log -Message "Information: Folder ""$($WorkingFolder_Content)\$($DeploymentType.DeploymentType_LogicalName)"" Content already exists" -Log "Main.log"
+                Write-CMTraceLog -LogText "Information: Folder ""$($WorkingFolder_Content)\$($DeploymentType.DeploymentType_LogicalName)"" Content already exists" -LogSeverity "Information" -LogFile $MainLogFile
                 Write-Host "Information: Folder ""$($WorkingFolder_Content)\$($DeploymentType.DeploymentType_LogicalName)"" Content already exists" -ForegroundColor Magenta
             }
             Write-Host ''
@@ -389,26 +395,26 @@ Function New-Win32App {
         #EndRegion Creating_Content_Folders
 
         #Region Downloading_Content
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
-        Write-Log -Message "Downloading Content" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "Downloading Content" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Downloading Content' -ForegroundColor DarkGray
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host ''
 
         ForEach ($Content in $Content_Array) {
-            Write-Log -Message "Downloading Content for Deployment Type $($Content.Content_DeploymentType_LogicalName) from Content Source $($Content.Content_Location)..." -Log "Main.log"
+            Write-CMTraceLog -LogText "Downloading Content for Deployment Type $($Content.Content_DeploymentType_LogicalName) from Content Source $($Content.Content_Location)..." -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host "Downloading Content for Deployment Type ""$($Content.Content_DeploymentType_LogicalName)"" from Content Source ""$($Content.Content_Location)""..." -ForegroundColor Cyan
-            Write-Log -Message "Get-ContentFiles -Source $($Content.Content_Location) -Destination (Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Content.Content_DeploymentType_LogicalName))" -Log "Main.log" 
+            Write-CMTraceLog -LogText "Get-ContentFiles -Source $($Content.Content_Location) -Destination (Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Content.Content_DeploymentType_LogicalName))" -LogSeverity "Information" -LogFile $MainLogFile 
             Get-ContentFiles -Source $Content.Content_Location -Destination (Join-Path -Path $WorkingFolder_Content -ChildPath $Content.Content_DeploymentType_LogicalName)
         }
         #EndRegion Downloading_Content
 
         #Region Create_Intunewin_Files
-        Write-Log -Message "--------------------------------------------" -Log "Main.log" 
-        Write-Log -Message "Creating .IntuneWin File(s)" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile 
+        Write-CMTraceLog -LogText "Creating .IntuneWin File(s)" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host ''
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Creating .IntuneWin File(s)' -ForegroundColor DarkGray
@@ -416,10 +422,10 @@ Function New-Win32App {
 
         #Get Application and Deployment Type Details and Files
         ForEach ($Application in $Applications_Array) {
-            Write-Log -Message "--------------------------------------------" -Log "Main.log" 
-            Write-Log -Message "$($Application.Application_Name)" -Log "Main.log"
-            Write-Log -Message "There are a total of $($Application.Application_TotalDeploymentTypes) Deployment Types for this Application:" -Log "Main.log"
-            Write-Log -Message "--------------------------------------------" -Log "Main.log"
+            Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile 
+            Write-CMTraceLog -LogText "$($Application.Application_Name)" -LogSeverity "Information" -LogFile $MainLogFile
+            Write-CMTraceLog -LogText "There are a total of $($Application.Application_TotalDeploymentTypes) Deployment Types for this Application:" -LogSeverity "Information" -LogFile $MainLogFile
+            Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
             Write-Host ''
             Write-Host '--------------------------------------------' -ForegroundColor DarkGray
             Write-Host """$($Application.Application_Name)""" -ForegroundColor Green
@@ -429,9 +435,9 @@ Function New-Win32App {
 
             ForEach ($Deployment in $DeploymentTypes_Array | Where-Object { $_.Application_LogicalName -eq $Application.Application_LogicalName }) {
             
-                Write-Log -Message "--------------------------------------------" -Log "Main.log" 
-                Write-Log -Message "$($Deployment.DeploymentType_Name)" -Log "Main.log"
-                Write-Log -Message "--------------------------------------------" -Log "Main.log"
+                Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile 
+                Write-CMTraceLog -LogText "$($Deployment.DeploymentType_Name)" -LogSeverity "Information" -LogFile $MainLogFile
+                Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
                 Write-Host '--------------------------------------------' -ForegroundColor DarkGray
                 Write-Host """$($Deployment.DeploymentType_Name)""" -ForegroundColor Green
                 Write-Host '--------------------------------------------' -ForegroundColor DarkGray
@@ -439,27 +445,27 @@ Function New-Win32App {
 
                 #Grab install command executable or script
                 $SetupFile = $Deployment.DeploymentType_InstallCommandLine
-                Write-Log -Message "Install Command: ""$($SetupFile)""" -Log "Main.log"
+                Write-CMTraceLog -LogText "Install Command: ""$($SetupFile)""" -LogSeverity "Information" -LogFile $MainLogFile
                 Write-Host "Install Command: ""$($SetupFile)"""
 
                 ForEach ($Content in $Content_Array | Where-Object { $_.Content_DeploymentType_LogicalName -eq $Deployment.DeploymentType_LogicalName }) {
 
                     #Create variables to pass to Function
-                    Write-Log -Message "`$ContentFolder = Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Deployment.DeploymentType_LogicalName)" -Log "Main.log"
+                    Write-CMTraceLog -LogText "`$ContentFolder = Join-Path -Path $($WorkingFolder_Content) -ChildPath $($Deployment.DeploymentType_LogicalName)" -LogSeverity "Information" -LogFile $MainLogFile
                     $ContentFolder = Join-Path -Path $WorkingFolder_Content -ChildPath $Deployment.DeploymentType_LogicalName
-                    Write-Log -Message "`$OutputFolder = Join-Path -Path (Join-Path -Path $($WorkingFolder_Win32Apps) -ChildPath $($Application.Application_LogicalName)) -ChildPath $Deployment.DeploymentType_LogicalName" -Log "Main.log"
+                    Write-CMTraceLog -LogText "`$OutputFolder = Join-Path -Path (Join-Path -Path $($WorkingFolder_Win32Apps) -ChildPath $($Application.Application_LogicalName)) -ChildPath $Deployment.DeploymentType_LogicalName" -LogSeverity "Information" -LogFile $MainLogFile
                     $OutputFolder = Join-Path -Path (Join-Path -Path $WorkingFolder_Win32Apps -ChildPath $Application.Application_LogicalName) -ChildPath $Deployment.DeploymentType_LogicalName
-                    Write-Log -Message "Install Command: ""$($SetupFile)""" -Log "Main.log"
+                    Write-CMTraceLog -LogText "Install Command: ""$($SetupFile)""" -LogSeverity "Information" -LogFile $MainLogFile
                     $SetupFile = $Deployment.DeploymentType_InstallCommandLine
 
-                    Write-Log -Message "Content Folder: ""$($ContentFolder)""" -Log "Main.log"
+                    Write-CMTraceLog -LogText "Content Folder: ""$($ContentFolder)""" -LogSeverity "Information" -LogFile $MainLogFile
                     Write-Host "Content Folder: ""$($ContentFolder)"""
-                    Write-Log -Message "Intunewin Output Folder: ""$($OutputFolder)""" -Log "Main.log"
+                    Write-CMTraceLog -LogText "Intunewin Output Folder: ""$($OutputFolder)""" -LogSeverity "Information" -LogFile $MainLogFile
                     Write-Host "Intunewin Output Folder: ""$($OutputFolder)"""
                     Write-Host ''
-                    Write-Log -Message "Creating .Intunewin for ""$($Deployment.DeploymentType_Name)""..." -Log "Main.log" 
+                    Write-CMTraceLog -LogText "Creating .Intunewin for ""$($Deployment.DeploymentType_Name)""..." -LogSeverity "Information" -LogFile $MainLogFile 
                     Write-Host "Creating .Intunewin for ""$($Deployment.DeploymentType_Name)""..." -ForegroundColor Cyan
-                    Write-Log -Message "`$IntuneWinFileCommand = New-IntuneWin -ContentFolder $($ContentFolder) -OutputFolder $($OutputFolder) -SetupFile $($SetupFile)" -Log "Main.log"
+                    Write-CMTraceLog -LogText "`$IntuneWinFileCommand = New-IntuneWin -ContentFolder $($ContentFolder) -OutputFolder $($OutputFolder) -SetupFile $($SetupFile)" -LogSeverity "Information" -LogFile $MainLogFile
                     New-IntuneWin -ContentFolder $ContentFolder -OutputFolder $OutputFolder -SetupFile $SetupFile
                 }
             }
@@ -467,7 +473,7 @@ Function New-Win32App {
         #EndRegion Create_Intunewin_Files
     }
     else {
-        Write-Log -Message "The -PackageApps parameter was not passed. Application and Deployment Type information will be gathered only, content will not be downloaded" -Log "Main.log" 
+        Write-CMTraceLog -LogText "The -PackageApps parameter was not passed. Application and Deployment Type information will be gathered only, content will not be downloaded" -LogSeverity "Information" -LogFile $MainLogFile 
         Write-Host "The -PackageApps parameter was not passed. Application and Deployment Type information will be gathered only, content will not be downloaded" -ForegroundColor Magenta
     }
     #EndRegion Package_Apps
@@ -475,9 +481,9 @@ Function New-Win32App {
     #Region Create_Apps
     #If the $CreateApps parameter was passed. Use the Win32Content Prep Tool to create Win32 Apps
     If ($CreateApps) {
-        Write-Log -Message "--------------------------------------------" -Log "Main.log" 
-        Write-Log -Message "Creating Win32 Apps" -Log "Main.log"
-        Write-Log -Message "--------------------------------------------" -Log "Main.log"
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile 
+        Write-CMTraceLog -LogText "Creating Win32 Apps" -LogSeverity "Information" -LogFile $MainLogFile
+        Write-CMTraceLog -LogText "--------------------------------------------" -LogSeverity "Information" -LogFile $MainLogFile
         Write-Host ''
         Write-Host '--------------------------------------------' -ForegroundColor DarkGray
         Write-Host 'Creating Win32 Apps' -ForegroundColor DarkGray
