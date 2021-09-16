@@ -1,0 +1,72 @@
+https://timmyit.com/2017/04/10/powershell-script-to-retrieve-all-detection-method-scripts-and-output-them-to-files/
+
+&lt;#   
+    .NOTES
+    ===========================================================================
+     Created on:    12/06/2016 
+     Modified on:   3/31/2017 
+     Created by:    Timmy Andersson
+     Contact:       @Timmyitdotcom
+    ===========================================================================
+    .DESCRIPTION
+        Retreives and outputs scripts used by detection methods. 
+#&gt;
+
+[CmdletBinding(DefaultParameterSetName = 'DestinationPath')]
+param
+(
+[Parameter(Mandatory = $true,
+Position = 1)]
+$DestinationPath
+)
+ 
+BEGIN
+{
+[String]$Filepath = $DestinationPath
+ 
+$SiteCodeObjs = Get-WmiObject -Namespace &quot;root\SMS&quot; -Class SMS_ProviderLocation -ComputerName $env:COMPUTERNAME -ErrorAction Stop
+foreach ($SiteCodeObj in $SiteCodeObjs)
+{
+if ($SiteCodeObj.ProviderForLocalSite -eq $true)
+{
+$SiteCode = $SiteCodeObj.SiteCode
+}
+}
+$SitePath = $SiteCode + &quot;:&quot;
+ 
+Import-module ($Env:SMS_ADMIN_UI_PATH.Substring(0, $Env:SMS_ADMIN_UI_PATH.Length - 5) + '\ConfigurationManager.psd1')
+ 
+}
+PROCESS
+{
+if (-not (Test-Path $DestinationPath))
+{
+new-item -Path $DestinationPath -ItemType Directory -Force
+}
+ 
+Set-location $SitePath
+ 
+$Apps = (Get-CMApplication)
+foreach ($App in $Apps)
+{
+ 
+$Script = ([Microsoft.ConfigurationManagement.ApplicationManagement.Serialization.SccmSerializer]::DeserializeFromString($App.SDMPackageXML)).DeploymentTypes[0].Installer
+if ($Script.DetectionScript -ne $Null)
+{
+$PSscript = ([Microsoft.ConfigurationManagement.ApplicationManagement.Serialization.SccmSerializer]::DeserializeFromString($App.SDMPackageXML)).DeploymentTypes[0].Installer.DetectionScript
+ 
+Switch ($PSscript.Language)
+{
+&quot;PowerShell&quot; { Out-File -FilePath &quot;$Filepath$($App.LocalizedDisplayName).ps1&quot; -InputObject $PSscript.Text }
+&quot;VBScript&quot; { Out-File -FilePath &quot;$Filepath$($App.LocalizedDisplayName).vbs&quot; -InputObject $PSscript.Text }
+&quot;JavaScript&quot; { Out-File -FilePath &quot;$Filepath$($App.LocalizedDisplayName).JS&quot; -InputObject $PSscript.Text }
+}
+ 
+}
+ 
+}
+ 
+}
+END
+{
+}

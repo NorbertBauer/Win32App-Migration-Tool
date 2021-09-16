@@ -1,0 +1,111 @@
+[String[]]$ApplicationName = "7-Zip 19.00 (x64)"
+#[String[]]$ApplicationName = "TeamViewer 15 Host (managed)"
+[String[]]$ApplicationName = "PORR SCCM Client Health"
+
+#Create Array to display Application and Deployment Type Information
+$DeploymentTypes = @()
+$ApplicationTypes = @()
+$Content = @()
+$Application = $ApplicationName[0]
+    #Grab the SDMPackgeXML which contains the Application and Deployment Type details
+    $XMLPackage = Get-CMApplication -Name $Application | Where-Object { $Null -ne $_.SDMPackageXML } | Select-Object -ExpandProperty SDMPackageXML
+    
+    $AppData = ([Microsoft.ConfigurationManagement.ApplicationManagement.Serialization.SccmSerializer]::DeserializeFromString($XMLPackage))
+    
+    $TotalDeploymentTypes = ($AppData.DeploymentTypes | Measure-Object | Select-Object -ExpandProperty Count)
+
+    If (!($Null -eq $TotalDeploymentTypes) -or (!($TotalDeploymentTypes -eq 0))) {
+        $ApplicationObject = New-Object PSCustomObject
+        #Application Details
+        $ApplicationObject | Add-Member NoteProperty -Name Application_LogicalName -Value $AppData.Name
+        $ApplicationObject | Add-Member NoteProperty -Name Application_Name -Value $AppData.DisplayInfo.Title
+        $ApplicationObject | Add-Member NoteProperty -Name Application_Description -Value $AppData.DisplayInfo.Description
+        $ApplicationObject | Add-Member NoteProperty -Name Application_Publisher -Value $AppData.DisplayInfo.Publisher
+        $ApplicationObject | Add-Member NoteProperty -Name Application_Version -Value $AppData.DisplayInfo.Version
+        $ApplicationObject | Add-Member NoteProperty -Name Application_IconId -Value $AppData.DisplayInfo.Icon.Id
+        $ApplicationObject | Add-Member NoteProperty -Name Application_TotalDeploymentTypes -Value $TotalDeploymentTypes
+            
+        #If we have the logo, add the path
+        If (!($Null -eq $AppData.DisplayInfo.Icon.Id)) {
+            Try {
+                If (Test-Path -Path (Join-Path -Path $WorkingFolder_Logos -ChildPath (Join-Path -Path $AppData.DisplayInfo.Icon.Id -ChildPath "Logo.jpg"))) {
+                    $ApplicationObject | Add-Member NoteProperty -Name Application_IconPath -Value (Join-Path -Path $WorkingFolder_Logos -ChildPath (Join-Path -Path $AppData.DisplayInfo.Icon.Id -ChildPath "Logo.jpg"))
+                }
+                else {
+                    $ApplicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $Null
+                }
+            }
+            Catch {
+                $ApplicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $Null
+            }
+        }
+        else {
+            $ApplicationObject | Add-Member NoteProperty -Name Application_IconPath -Value $Null  
+        }
+            
+        $ApplicationTypes += $ApplicationObject
+        $Object = $AppData.DeploymentTypes
+        #If Deployment Types exist, iterate through each DeploymentType and build deployment detail
+        ForEach ($Object in $AppData.DeploymentTypes) {
+
+            #Create new custom PSObjects to build line detail
+            $DeploymentObject = New-Object -TypeName PSCustomObject
+            $ContentObject = New-Object -TypeName PSCustomObject
+            Write-CMTraceLog -LogText "DeploymentObject():" -LogSeverity "Information" -LogFile $MainLogFile
+
+            #DeploymentType Details
+            Write-CMTraceLog -LogText "Application_LogicalName -Value $($AppData.Name)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name Application_LogicalName -Value $AppData.Name
+            Write-CMTraceLog -LogText "DeploymentType_LogicalName -Value $($Object.Name)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_LogicalName -Value $Object.Name
+            Write-CMTraceLog -LogText "DeploymentType_Name -Value $($Object.Title)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_Name -Value $Object.Title
+            Write-CMTraceLog -LogText "DeploymentType_Technology -Value $($Object.Installer.Technology)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_Technology -Value $Object.Installer.Technology
+            Write-CMTraceLog -LogText "DeploymentType_ExecutionContext -Value $($Object.Installer.ExecutionContext)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_ExecutionContext -Value $Object.Installer.ExecutionContext
+            Write-CMTraceLog -LogText "DeploymentType_InstallContent -Value $($Object.Installer.Contents.Id)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_InstallContent -Value $Object.Installer.Contents.Id
+            Write-CMTraceLog -LogText "DeploymentType_InstallCommandLine -Value $($Object.Installer.InstallCommandLine)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_InstallCommandLine -Value $Object.Installer.InstallCommandLine
+            Write-CMTraceLog -LogText "DeploymentType_UnInstallSetting -Value $($Object.Installer.UnInstallSetting)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_UnInstallSetting -Value $Object.Installer.UnInstallSetting
+            Write-CMTraceLog -LogText "DeploymentType_UninstallContent -Value $($Object.Installer.UninstallContent.Id)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_UninstallContent -Value $Object.Installer.UninstallContent.Id
+            Write-CMTraceLog -LogText "DeploymentType_UninstallCommandLine -Value $($Object.Installer.UninstallCommandLine)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_UninstallCommandLine -Value $Object.Installer.UninstallCommandLine
+            Write-CMTraceLog -LogText "DeploymentType_ExecuteTime -Value $($Object.Installer.ExecuteTime)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_ExecuteTime -Value $Object.Installer.ExecuteTime
+            Write-CMTraceLog -LogText "DeploymentType_MaxExecuteTime -Value $($Object.Installer.MaxExecuteTime)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_MaxExecuteTime -Value $Object.Installer.MaxExecuteTime
+
+            Write-CMTraceLog -LogText "DeploymentType_DetectionMethod -Value $($Object.Installer.DetectionMethod)" -LogSeverity "Information" -LogFile $MainLogFile
+            $DeploymentObject | Add-Member NoteProperty -Name DeploymentType_DetectionMethod -Value $Object.Installer.DetectionMethod
+            Switch ($Object.Installer.DetectionMethod) {
+                "Script" { $Object.Installer.DetectionScript }
+                "Enhanced" {
+                    $Object.Installer.EnhancedDetectionMethod.Xml | Out-File -FilePath C:\temp\NBauer\DetectionXML.xml -Encoding utf8 -Append -Force
+                    $(([xml]($Object.Installer.EnhancedDetectionMethod.Xml)).EnhancedDetectionMethod)
+                    $([string]$(ConvertTo-Xml -InputObject $($Object.Installer.EnhancedDetectionMethod.Xml) -As String))
+                    (ConvertTo-Xml -InputObject $($Object.Installer.EnhancedDetectionMethod.Xml))
+                    [Microsoft.ConfigurationManagement.ApplicationManagement.Serialization.SccmSerializer]::DeserializeFromString($([string]$(ConvertTo-Xml -InputObject $($Object.Installer.EnhancedDetectionMethod.Xml) -As String)))
+                    ConvertFrom-Xml $(ConvertTo-Xml -InputObject $($Object.Installer.EnhancedDetectionMethod.Xml))
+                }
+            }
+
+            $DeploymentTypes += $DeploymentObject
+
+            #Content Details
+            Write-CMTraceLog -LogText "ContentObject():" -LogSeverity "Information" -LogFile $MainLogFile
+            Write-CMTraceLog -LogText "Content_DeploymentType_LogicalName -Value $($Object.Name)" -LogSeverity "Information" -LogFile $MainLogFile
+            $ContentObject | Add-Member NoteProperty -Name Content_DeploymentType_LogicalName -Value $Object.Name
+            Write-CMTraceLog -LogText "Content_Location -Value $($Object.Installer.Contents.Content.Location)" -LogSeverity "Information" -LogFile $MainLogFile
+            $ContentObject | Add-Member NoteProperty -Name Content_Location -Value $Object.Installer.Contents.Location
+
+            $Content += $ContentObject                
+        }
+    }
+    else {
+        Write-CMTraceLog -LogText "Warning: No DeploymentTypes found for ""$($XMLContent.AppMgmtDigest.Application.LogicalName)""" -LogSeverity "Warning" -LogFile $MainLogFile
+        Write-Host "Warning: No DeploymentTypes found for ""$($XMLContent.AppMgmtDigest.Application.LogicalName)"" " -ForegroundColor Yellow
+    }

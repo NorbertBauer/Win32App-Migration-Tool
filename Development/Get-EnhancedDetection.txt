@@ -1,0 +1,16 @@
+function ConvertFrom-Xml($XML) {
+    foreach ($Object in $([xml]$XML).EnhancedDetectionMethod) {
+        $PSObject = New-Object PSObject
+        foreach ($Property in @($Object.Property)) {
+            $PSObject | Add-Member NoteProperty $Property.Name $Property.InnerText
+        }
+        $PSObject
+    }
+}
+
+$XML = $Object.Installer.EnhancedDetectionMethod.Xml
+
+@($([xml]$XML).EnhancedDetectionMethod.Settings.File)
+@($([xml]$XML).EnhancedDetectionMethod.Rule.Expression)
+@($([xml]$XML).EnhancedDetectionMethod.Rule.Expression.Operands.Expression.Operands)[0]
+@($([xml]$XML).EnhancedDetectionMethod.Rule.Expression.Operands.Expression.Operands.SettingReference)

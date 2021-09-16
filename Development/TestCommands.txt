@@ -1,0 +1,10 @@
+Import-Module IntuneWin32App
+Import-Module C:\Scripts\NBauer\Win32-AppMigrator\Win32AppMigrationTool.psd1
+Import-Module C:\Scripts\NBauer\Win32-AppMigrator\Win32AppMigrationTool.psm1
+New-Win32App -ProviderMachineName "PVIESSCCM101.konzern.dir" -SiteCode 001 -CollectionId 001001E1
+New-Win32App -ProviderMachineName "PVIESSCCM101.konzern.dir" -SiteCode 001 -CollectionId 0010023C
+
+New-Win32App -AppName "Acadoro*" -ProviderMachineName "PVIESSCCM101.konzern.dir" -SiteCode 001 -PackageApps -CreateApps -ExportLogo
+
+New-Win32App -ProviderMachineName "PVIESSCCM101.konzern.dir" -SiteCode 001 -PackageApps -CreateApps -ExportLogo -AppName "Test*"
+New-Win32App -ProviderMachineName "PVIESSCCM101.konzern.dir" -SiteCode 001 -AppName "*itune*"
